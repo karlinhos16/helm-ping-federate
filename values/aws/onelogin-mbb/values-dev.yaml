@@ -1,0 +1,937 @@
+USER-SUPPLIED VALUES:
+configMaps: {}
+global:
+  addReleaseNameToResource: prepend
+  annotations: {}
+  clustering:
+    autoscaling:
+      behavior: {}
+      enabled: false
+      maxReplicas: 4
+      minReplicas: 1
+      targetCPUUtilizationPercentage: 75
+    autoscalingMetricsTemplate: []
+  container:
+    affinity: {}
+    env: []
+    envFrom: []
+    lifecycle: {}
+    nodeSelector: {}
+    probes:
+      livenessProbe:
+        exec:
+          command:
+            - /opt/liveness.sh
+        failureThreshold: 4
+        initialDelaySeconds: 30
+        periodSeconds: 30
+        successThreshold: 1
+        timeoutSeconds: 5
+      readinessProbe:
+        exec:
+          command:
+            - /opt/readiness.sh
+        failureThreshold: 4
+        initialDelaySeconds: 30
+        periodSeconds: 5
+        successThreshold: 1
+        timeoutSeconds: 5
+      startupProbe:
+        exec:
+          command:
+            - /opt/liveness.sh
+        failureThreshold: 90
+        periodSeconds: 10
+        timeoutSeconds: 5
+    replicaCount: 1
+    resources:
+      limits:
+        cpu: 1m
+        memory: 0
+      requests:
+        cpu: 1m
+        memory: 0
+    securityContext: null
+    terminationGracePeriodSeconds: 30
+    tolerations: []
+  envs:
+    PING_IDENTITY_ACCEPT_EULA: "YES"
+  externalImage:
+    pingaccess:
+      resources:
+        limits:
+          cpu: 2
+          memory: 4Gi
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        runAsGroup: 0
+        runAsNonRoot: true
+        runAsUser: 9031
+    pingtoolkit:
+      resources:
+        limits:
+          cpu: 1
+          memory: 128Mi
+        requests:
+          cpu: 1m
+          memory: 64Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        readOnlyRootFilesystem: true
+        runAsGroup: 0
+        runAsNonRoot: true
+        runAsUser: 9031
+  image:
+    name: null
+    pullPolicy: IfNotPresent
+    repository: artifactory.santanderbr.corp/docker-base/pingidentity
+    repositoryFqn: null
+    tag: "2312"
+  includeInitContainers: []
+  includeSidecars: []
+  includeVolumes: []
+  ingress:
+    addReleaseNameToHost: subdomain
+    annotations: {}
+    defaultDomain: oa2.paas.isbanbr.dev.corp
+    defaultTlsSecret: null
+    enabled: false
+  labels: {}
+  license:
+    secret:
+      devOps: devops-secret
+  masterPassword:
+    enabled: false
+  privateCert:
+    additionalHosts: []
+    additionalIPs: []
+    format: PKCS12
+    generate: false
+  rbac:
+    applyServiceAccountToWorkload: true
+    generateGlobalRoleAndRoleBinding: false
+    generateGlobalServiceAccount: false
+    generateRoleAndRoleBinding: false
+    generateServiceAccount: false
+    role:
+      rules:
+        - apiGroups:
+            - ""
+          resources:
+            - pods
+          verbs:
+            - get
+            - watch
+            - list
+    serviceAccountName: _defaultServiceAccountName_
+  services: {}
+  utilitySidecar:
+    enabled: false
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: 128Mi
+  vault:
+    enabled: false
+    hashicorp:
+      annotations:
+        agent-init-first: true
+        agent-inject: true
+        agent-pre-populate-only: true
+        log-level: info
+        preserve-secret-case: true
+        role: k8s-default
+        secret-volume-path: /run/secrets
+        serviceAccountName: _defaultServiceAccountName_
+      secretPrefix: ""
+  workload:
+    annotations: {}
+    deployment:
+      strategy:
+        rollingUpdate:
+          maxSurge: 2
+          maxUnavailable: 0
+        type: RollingUpdate
+    enableServiceLinks: true
+    schedulerName: default-scheduler
+    securityContext:
+      fsGroup: 0
+      runAsGroup: 0
+      runAsUser: 9031
+    shareProcessNamespace: false
+    statefulSet:
+      partition: 0
+      persistentvolume:
+        enabled: true
+        volumes:
+          out-dir:
+            mountPath: /opt/out
+            persistentVolumeClaim:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 4Gi
+              storageClassName: efs-sc
+      podManagementPolicy: OrderedReady
+    topologySpreadConstraints: []
+    type: Deployment
+initContainers: {}
+ldap-sdk-tools:
+  container:
+    command: tail -f /dev/null
+    probes:
+      livenessProbe:
+        exec:
+          command:
+            - echo
+      readinessProbe:
+        exec:
+          command:
+            - echo
+      startupProbe:
+        exec:
+          command:
+            - echo
+  enabled: false
+  image:
+    name: ldap-sdk-tools
+  name: ldap-sdk-tools
+pd-replication-timing:
+  enabled: false
+  envs:
+    SERVER_PROFILE_PATH: dsreplication-timing
+    SERVER_PROFILE_URL: https://github.com/pingidentity/pingidentity-server-profiles.git
+    STARTUP_BACKGROUND_OPTS: ""
+    STARTUP_COMMAND: /opt/out/instance/bin/start-server
+  image:
+    name: pingtoolkit
+  name: pd-replication-timing
+pingaccess-admin:
+  container:
+    resources:
+      limits:
+        cpu: 2
+        memory: 4Gi
+      requests:
+        cpu: 1m
+        memory: 1Gi
+  enabled: false
+  image:
+    name: pingaccess
+  ingress:
+    hosts:
+      - host: pingaccess-admin._defaultDomain_
+        paths:
+          - backend:
+              serviceName: https
+            path: /
+            pathType: Prefix
+    tls:
+      - hosts:
+          - pingaccess-admin._defaultDomain_
+        secretName: _defaultTlsSecret_
+  name: pingaccess-admin
+  services:
+    clusterconfig:
+      containerPort: 9090
+      dataService: true
+      servicePort: 9090
+    https:
+      containerPort: 9000
+      dataService: true
+      ingressPort: 443
+      servicePort: 9000
+  workload:
+    type: StatefulSet
+pingaccess-engine:
+  container:
+    resources:
+      limits:
+        cpu: 2
+        memory: 4Gi
+      requests:
+        cpu: 1m
+        memory: 1Gi
+#    waitFor:
+#      pingaccess-admin:
+#        service: https
+#        timeoutSeconds: 300
+  enabled: false
+  image:
+    name: pingaccess
+  ingress:
+    hosts:
+      - host: pingaccess-engine._defaultDomain_
+        paths:
+          - backend:
+              serviceName: https
+            path: /
+            pathType: Prefix
+    tls:
+      - hosts:
+          - pingaccess-engine._defaultDomain_
+        secretName: _defaultTlsSecret_
+  name: pingaccess-engine
+  services:
+    https:
+      containerPort: 3000
+      dataService: true
+      ingressPort: 443
+      servicePort: 3000
+#pingauthorize:
+#  container:
+#    resources:
+#      limits:
+#        cpu: 2
+#        memory: 4Gi
+#      requests:
+#        cpu: 0
+#        memory: 1.5Gi
+#  enabled: true
+#  image:
+#    name: pingauthorize
+#  ingress:
+#    hosts:
+#    - host: pingauthorize._defaultDomain_
+#      paths:
+#      - backend:
+#          serviceName: https
+#        path: /
+#        pathType: Prefix
+#    tls:
+#    - hosts:
+#      - pingauthorize._defaultDomain_
+#      secretName: _defaultTlsSecret_
+#  name: pingauthorize
+#  services:
+#    clusterServiceName: pingauthorize-cluster
+#    https:
+#      containerPort: 1443
+#      dataService: true
+#      ingressPort: 443
+#      servicePort: 443
+#    ldaps:
+#      clusterService: true
+#      containerPort: 1636
+#      servicePort: 636
+#pingauthorizepap:
+#  container:
+#    resources:
+#      limits:
+#        cpu: 2
+#        memory: 2Gi
+#      requests:
+#        cpu: 0
+#        memory: .75Gi
+#  enabled: false
+#  envs:
+#    HTTPS_PORT: "8443"
+#  image:
+#    name: pingauthorizepap
+#  ingress:
+#    hosts:
+#    - host: pingauthorizepap._defaultDomain_
+#      paths:
+#      - backend:
+#          serviceName: https
+#        path: /
+#        pathType: Prefix
+#    tls:
+#    - hosts:
+#      - pingauthorizepap._defaultDomain_
+#      secretName: _defaultTlsSecret_
+#  name: pingauthorizepap
+#  services:
+#    https:
+#      containerPort: 8443
+#      dataService: true
+#      ingressPort: 443
+#      servicePort: 8443
+#pingcentral:
+#  container:
+#    resources:
+#      limits:
+#        cpu: 2
+#        memory: 2Gi
+#      requests:
+#        cpu: 0
+#        memory: .5Gi
+#  enabled: true
+#  image:
+#    name: pingcentral
+#  ingress:
+#    hosts:
+#    - host: pingcentral._defaultDomain_
+#      paths:
+#      - backend:
+#          serviceName: https
+#        path: /
+#        pathType: Prefix
+#    tls:
+#    - hosts:
+#      - pingcentral._defaultDomain_
+#      secretName: _defaultTlsSecret_
+#  name: pingcentral
+#  services:
+#    https:
+#      containerPort: 9022
+#      dataService: true
+#      ingressPort: 443
+#      servicePort: 9022
+pingdataconsole:
+  container:
+    resources:
+      limits:
+        cpu: 2
+        memory: 2Gi
+      requests:
+        cpu: 1m
+        memory: .5Gi
+  defaultLogin:
+    server:
+      host: pingdirectory-cluster
+      port: 636
+    username: administrator
+  enabled: true
+  image:
+    name: pingdataconsole
+  ingress:
+    hosts:
+      - host: pingdataconsole._defaultDomain_
+        paths:
+          - backend:
+              serviceName: https
+            path: /
+            pathType: Prefix
+    tls:
+      - hosts:
+          - pingdataconsole._defaultDomain_
+        secretName: _defaultTlsSecret_
+  name: pingdataconsole
+  services:
+    https:
+      containerPort: 8443
+      dataService: true
+      ingressPort: 443
+      servicePort: 8443
+pingdatagovernance:
+  container:
+    resources:
+      limits:
+        cpu: 2
+        memory: 4Gi
+      requests:
+        cpu: 1m
+        memory: 1.5Gi
+  enabled: false
+  image:
+    name: pingdatagovernance
+  ingress:
+    hosts:
+      - host: pingdatagovernance._defaultDomain_
+        paths:
+          - backend:
+              serviceName: https
+            path: /
+            pathType: Prefix
+    tls:
+      - hosts:
+          - pingdatagovernance._defaultDomain_
+        secretName: _defaultTlsSecret_
+  name: pingdatagovernance
+  services:
+    clusterServiceName: pingdatagovernance-cluster
+    https:
+      containerPort: 1443
+      dataService: true
+      ingressPort: 443
+      servicePort: 443
+    ldaps:
+      clusterService: true
+      containerPort: 1636
+      servicePort: 636
+pingdatagovernancepap:
+  container:
+    resources:
+      limits:
+        cpu: 2
+        memory: 2Gi
+      requests:
+        cpu: 1f
+        memory: .75Gi
+  enabled: false
+  envs:
+    HTTPS_PORT: "8443"
+  image:
+    name: pingdatagovernancepap
+  ingress:
+    hosts:
+      - host: pingdatagovernancepap._defaultDomain_
+        paths:
+          - backend:
+              serviceName: https
+            path: /
+            pathType: Prefix
+    tls:
+      - hosts:
+          - pingdatagovernancepap._defaultDomain_
+        secretName: _defaultTlsSecret_
+  name: pingdatagovernancepap
+  services:
+    https:
+      containerPort: 8443
+      dataService: true
+      ingressPort: 443
+      servicePort: 8443
+pingdatasync:
+  container:
+    resources:
+      limits:
+        cpu: 2
+        memory: 2Gi
+      requests:
+        cpu: 1m
+        memory: .75Gi
+  enabled: false
+  image:
+    name: pingdatasync
+  ingress:
+    hosts:
+      - host: pingdatasync._defaultDomain_
+        paths:
+          - backend:
+              serviceName: https
+            path: /
+            pathType: Prefix
+    tls:
+      - hosts:
+          - pingdatasync._defaultDomain_
+        secretName: _defaultTlsSecret_
+  name: pingdatasync
+  services:
+    clusterServiceName: pingdatasync-cluster
+    https:
+      containerPort: 1443
+      dataService: true
+      ingressPort: 443
+      servicePort: 443
+    ldaps:
+      clusterService: true
+      containerPort: 1636
+      servicePort: 636
+  workload:
+    statefulSet:
+      podManagementPolicy: OrderedReady
+    type: StatefulSet
+pingdelegator:
+  container:
+    resources:
+      limits:
+        cpu: 1
+        memory: 64Mi
+      requests:
+        cpu: 1m
+        memory: 32Mi
+  enabled: false
+  image:
+    name: pingdelegator
+  ingress:
+    hosts:
+      - host: pingdelegator._defaultDomain_
+        paths:
+          - backend:
+              serviceName: https
+            path: /
+            pathType: Prefix
+    tls:
+      - hosts:
+          - pingdelegator._defaultDomain_
+        secretName: _defaultTlsSecret_
+  name: pingdelegator
+  pingDirectoryServer:
+    port: 443
+  publicPort: 443
+  services:
+    https:
+      containerPort: 6443
+      dataService: true
+      ingressPort: 443
+      servicePort: 6443
+  tokenProvider:
+    clientId: dadmin
+    port: 9031
+pingdirectory:
+  container:
+    affinity: null
+    nodeSelector: null
+    probes:
+      readinessProbe:
+        failureThreshold: 4
+        periodSeconds: 30
+      startupProbe:
+        failureThreshold: 180
+        periodSeconds: 10
+    replicaCount: 2
+    resources:
+      limits:
+        cpu: 2
+        memory: 4Gi
+      requests:
+        cpu: 1m
+        memory: 4Gi
+    terminationGracePeriodSeconds: 300
+    tolerations:
+      - effect: NoExecute
+        key: purpose
+        operator: Equal
+        value: ping-directory
+  cronjob:
+    args: []
+    enabled: false
+    image: bitnami/kubectl:latest
+    jobspec: {}
+    spec: {}
+  enabled: true
+  envs:
+    JAVA_RAM_PERCENTAGE: "0.75"
+    JVM_TUNNING: AGGRESSIVE
+    MAKELDIF_USERS: "200000"
+    MAX_HEAP_SIZE: 2g
+    SERVER_PROFILE_METRICS_PATH: perf-testing/pingdirectory
+    SERVER_PROFILE_METRICS_URL: https://github.com/pingidentity/pingidentity-server-profiles.git
+    SERVER_PROFILE_PARENT: METRICS
+  image:
+    name: pingdirectory
+  ingress:
+    hosts:
+      - host: pingdirectory._defaultDomain_
+        paths:
+          - backend:
+              serviceName: https
+            path: /
+            pathType: Prefix
+    tls:
+      - hosts:
+          - pingdirectory._defaultDomain_
+        secretName: _defaultTlsSecret_
+  name: pingdirectory
+  secretVolumes:
+    pingdirectory-license:
+      items:
+        PingDirectory.lic: /opt/staging/pd.profile/server-root/pre-setup/PingDirectory.lic
+  services:
+    clusterServiceName: pingdirectory-cluster
+    https:
+      containerPort: 1443
+      dataService: true
+      ingressPort: 443
+      servicePort: 443
+    ldap:
+      containerPort: 1389
+      dataService: true
+      servicePort: 389
+    ldaps:
+      clusterService: true
+      containerPort: 1636
+      dataService: true
+      servicePort: 636
+  workload:
+    annotations:
+      prometheus.io/path: /metrics
+      prometheus.io/port: "9273"
+      prometheus.io/scrape: "true"
+      telegraf.influxdata.com/class: prometheus
+      telegraf.influxdata.com/inputs: "[[inputs.http]]\n  urls = [\"https://localhost:1443/directory/v1/cn=LDAP%20Result%20Codes,cn=monitor\"]\n
+        \ name_override = \"pingdirectory_monitor\"\n  data_format = \"json\"\n  insecure_skip_verify
+        = true\n  # Optional HTTP Basic Auth Credentials\n  username = \"cn=administrator\"\n
+        \ password = \"2FederateM0re\"\n[[inputs.statsd]]\n  protocol = \"udp\"\n
+        \ service_address = \":8125\"\n  # ## Percentiles to calculate for timing
+        & histogram stats.\n  # percentiles = [50.0, 90.0, 99.0, 99.9, 99.95, 100.0]\n
+        \ metric_separator = \"_\"\n  ## Statsd data translation templates, more info
+        can be read here:\n  ## https://github.com/influxdata/telegraf/blob/master/docs/TEMPLATE_PATTERN.md\n
+        \ templates = [\n      \"*.*.throughput *.operation.measurement*\",\n      \"*.*.response-time
+        *.operation.measurement*\",\n      \"*.backend-entry-count backendID.measurement*\",\n
+        \     \"*.backend-db-cache-percent-full backendID.measurement*\",\n      \"*.backend-size-on-disk
+        backendID.measurement*\",\n      \"*.backend-active-cleaner-threads backendID.measurement*\",\n
+        \     \"*.backend-cleaner-backlog backendID.measurement*\",\n      \"*.backend-nodes-evicted
+        backendID.measurement*\",\n      \"*.backend-checkpoints backendID.measurement*\",\n
+        \     \"*.backend-avg-checkpoint-duration backendID.measurement*\",\n      \"*.backend-time-since-last-checkpoint
+        backendID.measurement*\",\n      \"*.backend-new-db-logs backendID.measurement*\",\n
+        \     \"*.backend-random-reads backendID.measurement*\",\n      \"*.backend-random-writes
+        backendID.measurement*\",\n      \"*.backend-sequential-reads backendID.measurement*\",\n
+        \     \"*.backend-sequential-writes backendID.measurement*\",\n      \"*.entry-cache-hit-ratio
+        entryCache.measurement*\",\n      \"*.entry-cache-hit-count entryCache.measurement*\",\n
+        \     \"*.entry-cache-attempts entryCache.measurement*\",\n      \"*.entry-cache-add-or-update
+        entryCache.measurement*\",\n      \"*.entry-cache-size entryCache.measurement*\",\n
+        \     \"*.entry-cache-pct-full entryCache.measurement*\",\n      \"*.*.*.garbage-collections
+        gcType.size.cause.measurement*\",\n      \"*.*.*.garbage-collection-duration
+        gcType.size.cause.measurement*\",\n      \"*.garbage-collection-live-mbytes
+        region.measurement*\",\n      \"changelog.* backendID.measurement*\",\n      \"*.*.*.*.ldap-conn-handler-bytes-read
+        *.*.*.port.measurement*\",\n      \"*.*.*.*.ldap-conn-handler-bytes-written
+        *.*.*.port.measurement*\",\n      \"*.*.*.*.ldap-conn-handler-messages-read
+        *.*.*.port.measurement*\",\n      \"*.*.*.*.ldap-conn-handler-messages-written
+        *.*.*.port.measurement*\",\n      \"*.*.*.*.ldap-conn-handler-search-requests
+        *.*.*.port.measurement*\",\n      \"*.*.*.*.ldap-conn-handler-search-entries-returned
+        *.*.*.port.measurement*\"\n    ]         \n\n\n"
+    statefulSet:
+      persistentvolume:
+        volumes:
+          out-dir:
+            persistentVolumeClaim:
+              resources:
+                requests:
+                  storage: 10Gi
+      podManagementPolicy: OrderedReady
+    type: StatefulSet
+pingdirectoryproxy:
+  container:
+    resources:
+      limits:
+        cpu: 2
+        memory: 2Gi
+      requests:
+        cpu: 1m
+        memory: .75Gi
+  enabled: true
+  image:
+    name: pingdirectoryproxy
+  ingress:
+    hosts:
+      - host: pingdirectoryproxy._defaultDomain_
+        paths:
+          - backend:
+              serviceName: https
+            path: /
+            pathType: Prefix
+    tls:
+      - hosts:
+          - pingdirectoryproxy._defaultDomain_
+        secretName: _defaultTlsSecret_
+  name: pingdirectoryproxy
+  services:
+    clusterServiceName: pingdirectoryproxy-cluster
+    https:
+      containerPort: 1443
+      dataService: true
+      ingressPort: 443
+      servicePort: 443
+    ldaps:
+      clusterService: true
+      containerPort: 1636
+      servicePort: 636
+  workload:
+    statefulSet:
+      persistentvolume:
+        enabled: true
+    type: StatefulSet
+pingfederate-admin:
+  container:
+    resources:
+      limits:
+        cpu: 2
+        memory: 4Gi
+      requests:
+        cpu: 1m
+        memory: 4Gi
+  enabled: true
+  envs:
+    MOCK: me
+  image:
+    name: pingfederate
+  ingress:
+    hosts:
+      - host: pingfederate-admin._defaultDomain_
+        paths:
+          - backend:
+              serviceName: https
+            path: /
+            pathType: Prefix
+    tls:
+      - hosts:
+          - pingfederate-admin._defaultDomain_
+        secretName: _defaultTlsSecret_
+  name: pingfederate-admin
+  services:
+    clusterServiceName: pingfederate-cluster
+    clusterbind:
+      clusterService: true
+      containerPort: 7600
+      servicePort: 7600
+    clusterfail:
+      clusterService: true
+      containerPort: 7700
+      servicePort: 7700
+    https:
+      containerPort: 9999
+      dataService: true
+      ingressPort: 443
+      servicePort: 9999
+  workload:
+    statefulSet:
+      persistentvolume:
+        enabled: true
+        volumes:
+          out-dir:
+            mountPath: /opt/out/instance/server/default/data
+            persistentVolumeClaim:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 8Gi
+              storageClassName: efs-sc
+    type: StatefulSet
+pingfederate-engine:
+  container:
+    nodeSelector: null
+    resources:
+      limits:
+        cpu: 2
+        memory: 4Gi
+      requests:
+        cpu: 1m
+        memory: 4Gi
+    tolerations: null
+    waitFor:
+      pingfederate-admin:
+        service: https
+        timeoutSeconds: 300
+  enabled: true
+  envs:
+    PF_ADMIN_PORT: "9999"
+  image:
+    name: pingfederate
+  ingress:
+    hosts:
+      - host: pingfederate-engine._defaultDomain_
+        paths:
+          - backend:
+              serviceName: https
+            path: /
+            pathType: Prefix
+    tls:
+      - hosts:
+          - pingfederate-engine._defaultDomain_
+        secretName: _defaultTlsSecret_
+  name: pingfederate-engine
+  services:
+    clusterServiceName: pingfederate-cluster
+    clusterbind:
+      clusterService: true
+      containerPort: 7600
+      servicePort: 7600
+    clusterfail:
+      clusterService: true
+      containerPort: 7700
+      servicePort: 7700
+    https:
+      containerPort: 9031
+      dataService: true
+      ingressPort: 443
+      servicePort: 9031
+  workload:
+    annotations:
+      prometheus.io/path: /metrics
+      prometheus.io/port: "9273"
+      prometheus.io/scrape: "true"
+      telegraf.influxdata.com/class: prometheus
+      telegraf.influxdata.com/inputs: |
+        [[inputs.http]]
+          urls = ["https://localhost:9031/pf/heartbeat.ping"]
+          name_override = "pingfederate_heartbeat"
+          data_format = "json"
+          insecure_skip_verify = true
+pingintelligence:
+  container:
+    resources:
+      limits:
+        cpu: 2
+        memory: 2Gi
+      requests:
+        cpu: 1m
+        memory: .5Gi
+  enabled: false
+  image:
+    name: pingintelligence
+  ingress:
+    hosts:
+      - host: pingintelligence._defaultDomain_
+        paths:
+          - backend:
+              serviceName: https
+            path: /
+            pathType: Prefix
+    tls:
+      - hosts:
+          - pingintelligence._defaultDomain_
+        secretName: _defaultTlsSecret_
+  name: pingintelligence
+  services:
+    https:
+      containerPort: 8010
+      dataService: true
+      ingressPort: 443
+      servicePort: 8010
+  volumeMounts:
+    - mountPath: /dev/shm
+      name: dshm
+  volumes:
+    - emptyDir:
+        medium: Memory
+      name: dshm
+pingtoolkit:
+  enabled: false
+  image:
+    name: pingtoolkit
+  name: pingtoolkit
+sidecars: {}
+testFramework:
+  enabled: false
+  finalStep:
+    command:
+      - /bin/sh
+      - -c
+      - echo "*************************************"; echo "Testing Complete"; date;
+        echo "*************************************";
+      - exit 0
+    image: busybox
+    imagePullPolicy: IfNotPresent
+    name: 99-completion
+    resources:
+      limits:
+        cpu: 1
+        memory: 128Mi
+      requests:
+        cpu: 1m
+        memory: 64Mi
+  name: testframework
+  pod:
+    securityContext:
+      runAsGroup: 0
+      runAsUser: 9031
+  rbac:
+    enabled: true
+    role:
+      rules:
+        - apiGroups:
+            - '*'
+          resources:
+            - '*'
+          verbs:
+            - '*'
+  sharedMountPath: /var/run/shared
+  testConfigMaps:
+    prefix: ping-devops-test-
+    volumeMountPath: /var/run/
+  testSteps: []
+volumes: {}

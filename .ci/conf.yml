@@ -1,0 +1,14 @@
+matriculaPO: x311200
+acronymTargetCluster: est
+environment:
+  dev:
+    cloudProvider:
+    - AWS
+  pre:
+    cloudProvider:
+    - AWS
+  green:
+    cloudProvider:
+    - AWS
+technology:
+  name: HELM
